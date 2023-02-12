@@ -1,0 +1,13 @@
+Flask==2.2.2
+Flask-SQLAlchemy==3.0.3
+feather-format==0.4.1
+h5py==3.6.0
+numpy==1.22.0
+scipy==1.10.0
+Pillow==9.0.0
+regex==2021.11.10
+torch==1.10.1
+torchvision==0.11.2
+wcwidth==0.2.5
+matplotlib==3.5.1
+git+https://github.com/openai/CLIP.git@3702849800aa56e2223035bccd1c6ef91c704ca8

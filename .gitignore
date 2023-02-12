@@ -1,0 +1,10 @@
+/cpu-venv/
+/cuda-venv/
+__pycache__/
+/flask/CLIPSearch.db
+/flask/CLIPSearch.db-journal
+/flask/instance/
+kdtree.pkl
+*.npy
+*.pt
+

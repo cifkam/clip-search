@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Hello world!</h1>
+<img src="{{ url_for('get_file', filename='/home/martin/Pictures/kupka1.jpg') }}" height="500">
+{% endblock %}

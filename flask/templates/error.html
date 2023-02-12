@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+
+{% block content %}
+{% if description %}
+<div class="code">
+    <code>{{ description }}</code>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script type="text/javascript">
+    function sendForm(form){
+        console.log('sent form: ' + $(form).serialize());
+        return false;
+    }
+    
+    
+    function loadLabels(){
+        form = document.querySelector("main form");
+        var labels = sessionStorage.getItem("labels");
+        if (labels !== null)
+        {
+            form["labels"].value = labels;
+        }
+        else
+        {
+            form["labels"].value = "a dog\na blueberry muffin\na painting\na modern art\na painting in style of orphism\nan abstract painting\na patining by František Kupka\na painting by Kandinsky\na picture of a plant";
+            saveLabels(form);
+        }
+        return false;
+    }
+    
+    function saveLabels(form) {
+        sessionStorage.setItem("labels", form["labels"].value);
+        return false;
+    }
+</script>
+{% endblock %}
+
+{% block title %}Image Classification{% endblock %}
+{% block heading%}Image Classification{% endblock %}
+{% block body_attrs %}onload="loadLabels()"{% endblock %}
+{% block content %}
+<div id="form-container">
+    <form method="post" enctype="multipart/form-data" onsubmit="saveLabels(this)" method="POST">
+        <input type="file" name="upload" accept="image/*" class="drop-area" required><br>
+        <textarea rows="15" cols="50" type="text" name="labels" required></textarea><br>
+        <button type="submit" class="submit">Classify</button>
+    </form>
+</div>
+<div>
+    {% if result %}
+    <table id="result">
+    {% for row in result %}
+        <tr>
+            {% for value in row %}
+                <td>{{value}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </table>
+    {% endif %}
+</div>
+
+{% endblock  %}

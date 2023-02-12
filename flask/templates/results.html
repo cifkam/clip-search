@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+
+{% block title %}Search{% endblock %}
+{% block heading %}Search{% endblock %}
+
+{% block content %}
+
+<div class="gallery">
+    {% for value in result %}
+        <img src={{value}}>
+    {% endfor %}
+</div>
+
+{% endblock %}
