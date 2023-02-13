@@ -3,6 +3,24 @@ body {
     font-family: Arial, sans-serif;
 }
 
+body#page-progress main
+{
+    text-align: center;
+}
+
+progress
+{
+    width: 200px;
+    height: 60px;
+}
+
+progress::after {
+    content: " ";
+    width: 100px;
+    height: 100px;
+    background-color: cyan;
+}
+
 header nav form,
 body
 {

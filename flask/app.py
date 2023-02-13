@@ -8,7 +8,6 @@ from models import db
 from views import Views
 from settings import *
 import os, os.path
-import sys
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///CLIPSearch.db'
@@ -18,6 +17,7 @@ db.init_app(app)
 # Prevent from loading the CLIP model twice on startup and when reloading
 #if os.environ.get("WERKZEUG_RUN_MAIN") != "true": 
 views = Views()
+progress_thr = None
 
 with app.app_context():
     db.create_all()
@@ -40,9 +40,13 @@ def image_search():
 def classification():
     return views.classification()
 
-@app.route('/settings/')
+@app.route('/settings/', methods=['GET','POST'])
 def settings():
     return views.settings()
+
+@app.route('/progress_status')
+def progress_status():
+    return views.progress_status()
 
 @app.route('/db_images/<path:filename>')
 def get_file(filename):

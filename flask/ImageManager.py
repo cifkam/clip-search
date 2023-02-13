@@ -13,22 +13,22 @@ from scipy.spatial import KDTree
 from glob import glob
 from models import db
 from CLIPWrapper import CLIPWrapper
+from tqdm import tqdm
 
 
 class ImageManager:
     image_formats = ['jpg','jpeg','png','gif','bmp','ico','tiff','tga','webp']
 
-    def __init__(self, *, clip_wrapper = None, vector_size=512, model_name = "ViT-B/32", prefer_cuda=False) -> None:
+    def __init__(self, *, clip_wrapper = None, model_name = "ViT-B/32", prefer_cuda=False) -> None:
         self.dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        self.model_name = model_name
 
         if clip_wrapper is not None:
             self.clip = clip_wrapper
         self.clip = CLIPWrapper.Create(model_name=model_name, prefer_cuda=prefer_cuda)
 
-        if (self.load_kdtree()):
-            print("Loaded existing kd-tree")
-        else:
-            print("Warning! File 'kd-tree.pkl' not found!")
+        self.try_load_kdtree()
+        
 
     def images(self): return db.session.query(models.Image)
 
@@ -39,7 +39,7 @@ class ImageManager:
         return self.query(self.clip.img2vec(image), k=k)
     
     def query(self, embedding, k=1):
-        indices = self.kdtree.query(embedding, k=k)[1].reshape(-1)
+        indices = self.kdtree.query(embedding.cpu().numpy(), k=k)[1].reshape(-1)
         indices = 1 + indices[indices < self.kdtree.data.shape[0]]
         db_query = list( models.Image.query.filter(models.Image.id.in_(indices.tolist())).order_by(models.Image.id) )
 
@@ -50,17 +50,22 @@ class ImageManager:
         
 
     def create_kdtree(self, data):
+        filename = f"kdtree_{self.model_name.replace('/','-')}.pkl"
         kdtree = KDTree(data)
-        with open("kdtree.pkl", "wb") as f:
+        with open(filename, "wb") as f:
             pickle.dump(kdtree, f)
         self.kdtree = kdtree
 
-    def load_kdtree(self):
-        if Path("kdtree.pkl").is_file():
-            with open("kdtree.pkl", "rb") as f:
+    def try_load_kdtree(self):
+        filename = f"kdtree_{self.model_name.replace('/','-')}.pkl"
+        if Path(filename).is_file():
+            with open(filename, "rb") as f:
                 self.kdtree = pickle.load(f)
+            print(f"Successfully loaded {filename}.")
             return True
         else:
+            print(f"Warning: '{filename}' not found!")
+            self.kdtree = None
             return False
 
     def get_embedding(self, path):
@@ -72,12 +77,11 @@ class ImageManager:
         self.clear_all()
         self.init_from_dir(dir)
 
-    def refresh(self, dir):
-        print()
+    def refresh(self, dir, progress_bar=True):
         # Find missing files   and   files that are already present
         db_paths = set(map(lambda x: x.path, self.images()))
         dir_paths = set(self.find_images(dir))
-        
+
         missing = dir_paths-db_paths
         intersection = db_paths.intersection(dir_paths)
         intersection = list(models.Image.query.filter(models.Image.path.in_(intersection)))
@@ -89,14 +93,18 @@ class ImageManager:
         
         # Add old images to the database and update the embeddings if necessary
         update = False
-        for i, old_img in enumerate(intersection):
+        print("Adding and updating old images:")
+        imgs = tqdm(list(enumerate(intersection))) if progress_bar else tqdm(enumerate(intersection))
+        for i, old_img in imgs:
             new_img = self.insert_image(old_img.path)
             if old_img.timestamp !=  new_img.timestamp:
                 update = True
                 old_data[i] = self.get_embedding(new_img.path)
 
         # Add new images to the databse
+        print("Adding new images:")
         new_data = []
+        missing = tqdm(missing) if progress_bar else missing
         for file in missing:
             self.insert_image(file)
             embedding = self.get_embedding(file)
@@ -110,15 +118,22 @@ class ImageManager:
 
         try:
             db.session.commit()
+            print("Building k-d tree")
             self.create_kdtree(data)
         except Exception as e:
             db.session.rollback()
             raise e
 
 
-    def init_from_dir(self, dir):
+    def init_from_dir(self, dir, progress_bar=True):
         vectors = []
-        for file in self.find_images(dir):
+
+        if progress_bar:
+            paths = tqdm(list(self.find_images(dir)), ncols=100)
+        else:
+            self.find_images(dir)
+
+        for file in paths:
             self.insert_image(file)
             embedding = self.get_embedding(file)
             vectors.append(embedding)
@@ -127,6 +142,7 @@ class ImageManager:
 
         try:
             db.session.commit()
+            print("Building k-d tree")
             self.create_kdtree(data)
         except Exception as e:
             db.session.rollback()

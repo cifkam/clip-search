@@ -4,7 +4,10 @@ __pycache__/
 /flask/CLIPSearch.db
 /flask/CLIPSearch.db-journal
 /flask/instance/
-kdtree.pkl
+/flask/kdtree_*.pkl
+/flask/db_images/ILSVRC2017_test
+/flask/db_images/db_images
+/flask/backup
 *.npy
 *.pt
 

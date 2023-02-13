@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script type="text/javascript">
+function check_progress(bar) {
+    function worker() {
+        $.get('/progress_status', function(progress) {
+            bar.value = progress
+  
+            if (progress < 1.0)
+                setTimeout(worker, 1000)
+            else
+                location.reload()
+        })
+    }
+    worker()
+}
+
+function start_progressbar(id)
+{
+    check_progress(document.getElementById(id))
+}
+</script>
+{% endblock %}
+
+{% block title %}Something is coming...{% endblock %}
+{% block heading %}Something is coming...{% endblock %}
+{% block body_attrs %} id="page-progress" onload='start_progressbar("progressbar")' {% endblock %}
+
+{% block content %}
+<p>Oh no! You have to wait...</p>
+<progress id="progressbar" value="0.0" max="1.0"></progress>
+{% endblock %}

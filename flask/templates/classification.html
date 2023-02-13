@@ -35,7 +35,7 @@
 {% block body_attrs %}onload="loadLabels()"{% endblock %}
 {% block content %}
 <div id="form-container">
-    <form method="post" enctype="multipart/form-data" onsubmit="saveLabels(this)" method="POST">
+    <form enctype="multipart/form-data" onsubmit="saveLabels(this)" method="POST">
         <input type="file" name="upload" accept="image/*" class="drop-area" required><br>
         <textarea rows="15" cols="50" type="text" name="labels" required></textarea><br>
         <button type="submit" class="submit">Classify</button>

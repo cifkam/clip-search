@@ -1,17 +1,11 @@
-import os
-
 DEBUG = True
 USE_RELOADER = True
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 
-PREFER_CUDA = False
+PREFER_CUDA = True
+QUERY_K = 15
 
-MODEL_NAME = "ViT-B/32"
-EMBEDDING_SIZE = 512
-
-
-# WARNING: this allows to access whole filesystem/current drive,
-# change it to some other path where your images are stored
-#FILES_ROOT = os.path.abspath('.').split(os.path.sep)[0]+os.path.sep
+#clip.available_models(): ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
+MODEL_NAME = "RN50"
 
 DB_IMAGES_ROOT = 'db_images'
