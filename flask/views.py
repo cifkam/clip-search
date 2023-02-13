@@ -1,7 +1,7 @@
 from flask import render_template, request, send_from_directory, redirect, abort
 from PIL import Image
 from ImageManager import ImageManager
-from utils import LockingProgressBarProcess, ReadWriteLock
+from utils import LockingProgressBarThread, ReadWriteLock
 from settings import QUERY_K, MODEL_NAME, PREFER_CUDA, DB_IMAGES_ROOT
 
 class Views:
@@ -14,29 +14,38 @@ class Views:
         )
         self.rwlock = ReadWriteLock()
 
-    def progressbar_lock(blocking=True, timeout=0.5):
+    def progressbar_rwlock(blocking=True, timeout=0.5, acquire_write=False):
         def decorator(function):
-            def wrapper(*args,**kwargs):
-                # Try to run the function with unique lock
-                acquired = args[0].rwlock.acquire_read(blocking, timeout)
+
+            def wrapper(self, *args,**kwargs):
+                if acquire_write:
+                    acquire_lock = self.rwlock.acquire_write
+                    release_lock = self.rwlock.release_write
+                else:
+                    acquire_lock = self.rwlock.acquire_read
+                    release_lock = self.rwlock.release_read
+
+                # Try to run the function with lock acquired
+                acquired = acquire_lock(blocking, timeout)
                 if acquired:
                     try:
-                        ret = function(*args, **kwargs)
+                        ret = function(self, *args, **kwargs)
                     finally:
-                        args[0].rwlock.release_read()
+                        release_lock()
                     return ret
                 else:
                     # If cannot acquire lock, show the progressbar page
                     return render_template('progress.html')
+
             return wrapper
         return decorator
 
 
-    @progressbar_lock()
+    @progressbar_rwlock()
     def index(self):
         return render_template('index.html')
 
-    @progressbar_lock()
+    @progressbar_rwlock()
     def search(self):
         if 'q' in request.args and request.args['q'] != "":
             text = request.args['q']
@@ -46,7 +55,7 @@ class Views:
             return render_template("results.html", result=paths)
         return render_template('search.html')
 
-    @progressbar_lock()
+    @progressbar_rwlock()
     def image_search(self):
         if request.method == 'POST':
             try:
@@ -60,7 +69,7 @@ class Views:
         else:
             return render_template('image_search.html')
 
-    @progressbar_lock()
+    @progressbar_rwlock()
     def classification(self):
         html = 'classification.html'
 
@@ -84,21 +93,22 @@ class Views:
         else:
             return self.settings_get()
 
-    @progressbar_lock()
+    @progressbar_rwlock()
     def settings_get(self):
         return render_template('settings.html')
 
+    # No @progress_rwlock() here, we need to handle it manually
     def settings_post(self):
         import time
 
         # Try to acquire_write (unique access)
         acquired = self.rwlock.acquire_write(True, 1.0)
         
-        # If acquired and EITHER there was no previous self.thr OR the previous self.thr has already finished:
-        if acquired and (self.thr is None  or  self.thr.progress == 1.0):
+        # If acquired and EITHER there was no previous self.thr OR there was and it has already finished:
+        if acquired and (self.thr is None or self.thr.progress == 1.0):
             try:
                 # Start a new thread with our function (and with unique lock)
-                self.thr = LockingProgressBarProcess(lambda x: time.sleep(1), list(range(10)), self.rwlock)
+                self.thr = LockingProgressBarThread(lambda x: time.sleep(1), list(range(5)), self.rwlock)
                 self.thr.start()
             finally:
                 self.rwlock.release_write()

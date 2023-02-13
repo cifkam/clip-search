@@ -52,11 +52,7 @@ class CLIPWrapper:
             
             logits_per_image, logits_per_text = self.model(image, text)
             probs = logits_per_image.softmax(dim=-1).cpu().numpy()
-            #probs = self.__classify_predict(image_features, text_features)
 
         result = dict(zip(labels, map(lambda x: str(x/100), (100**2*probs).astype(int)[0].tolist())))
         self.log('\n'+pprint.pformat(result))
         return result
-
-    def __classify_predict(self, features1, features2):
-        return ((100.0 * features1 @ features2.T).softmax(dim=-1)).cpu().numpy()

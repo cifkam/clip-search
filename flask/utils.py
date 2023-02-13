@@ -1,24 +1,28 @@
 import threading
 
-class LockingProgressBarProcess(threading.Thread):
-    def __init__(self, funct, iterable, rwlock, length=None):
+class LockingProgressBarThread(threading.Thread):
+    def __init__(self, fn, collection, rwlock, *fn_args, **fn_kwargs):
         self.progress = -1.0
-        self.collection = iterable
-        self.funct = funct
+        self.iterable = collection
+        self.funct = fn
         self.rwlock = rwlock
-        self.length = len(iterable) if length is None else length
+        self.length = len(collection)
+
+        self.fn_args = fn_args
+        self.fn_kwargs = fn_kwargs
         super().__init__()
 
     def run(self):
         self.rwlock.acquire_write()
         try:
             self.progress = 0.0
-            for i, x in enumerate(self.collection):
-                self.funct(x)
-                self.progress = (i+1) / self.length
-            self.progress = 1.0
+            for i, x in enumerate(self.iterable):
+                self.funct(x, *self.fn_args, **self.fn_kwargs)
+                # Save the progress (between 0 and 1) but with small value subtracted so the exact value 1.0 is present *after* the lock release
+                self.progress = (i+1)/self.length - 1e-4
         finally:
             self.rwlock.release_write()
+            self.progress = 1.0
 
 
 class ReadWriteLock:
