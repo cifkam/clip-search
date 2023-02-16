@@ -6,12 +6,13 @@ from matplotlib.pyplot import title
 from sqlalchemy import desc
 from models import db
 from views import Views
-from settings import *
+from settings import settings
 import os, os.path
 
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///CLIPSearch.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + settings.SQLITE_DB_NAME
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = settings.SQLALCHEMY_TRACK_MODIFICATIONS
 db.init_app(app)
 
 # Prevent from loading the CLIP model twice on startup and when reloading
@@ -70,4 +71,4 @@ def generic_error_handler(e):
 
 ###############################
 if __name__ == "__main__":
-    app.run(debug=DEBUG, use_reloader=USE_RELOADER)
+    app.run(debug=settings.DEBUG, use_reloader=settings.USE_RELOADER)

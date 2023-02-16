@@ -1,0 +1,10 @@
+{
+	"PREFER_CUDA": true,
+	"QUERY_K": 15,
+	"DB_IMAGES_ROOT": "db_images",
+	"MODEL_NAME": "RN50",
+	"SQLITE_DB_NAME": "CLIPSearch.db",
+	"DEBUG": true,
+	"USE_RELOADER": true,
+	"SQLALCHEMY_TRACK_MODIFICATIONS": true
+}

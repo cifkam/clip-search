@@ -5,10 +5,10 @@ import models
 import numpy as np
 from datetime import datetime
 from ImageManager import ImageManager
-from settings import MODEL_NAME, PREFER_CUDA
+from settings import settings
 app.app_context().push()
 
-im = ImageManager(model_name=MODEL_NAME, prefer_cuda=PREFER_CUDA)
+im = ImageManager(model_name=settings.MODEL_NAME, prefer_cuda=settings.PREFER_CUDA)
 
 
 if True:

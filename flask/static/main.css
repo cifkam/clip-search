@@ -15,7 +15,7 @@ progress
 }
 
 form {
-    margin: 12px 5px;
+    margin: 12px 0;
 }
 
 progress::after {
@@ -35,7 +35,7 @@ form.search i {
     padding: 10px 5px;
 }
 
-header nav .search i.fa-search:hover {
+.search i.fa-search:hover {
     color: #aaa;
 }
 
@@ -114,6 +114,19 @@ input[type="text"] {
     border-radius: 0px;
 }
 
+button, select {
+    cursor: pointer;
+}
+button, select, textarea{
+    background-color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+}
+select {
+    border-right: 5px solid white;
+}
+
 header nav form input[type="text"] {
     background-color: transparent;
 }
@@ -122,7 +135,7 @@ form.search button {
     border: none;
     background: transparent;
     cursor: pointer;
-    padding-right: 10px;
+    padding: 0 10px 0 0;
 }
 
 .gallery {
@@ -177,8 +190,8 @@ form.search button {
 /* ====== input[type="file"] redesign ===== */
 
 .input-file-wrapper input[type="file"] {
-    width: 200px;
-    height: 85px;
+    width: 300px;
+    height: 300px;
     display: inline-block;
     position: relative;
     z-index: 10;
@@ -195,17 +208,16 @@ form.search button {
     left: 0;
     width: 100%;
     height: 100%;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-wrap: wrap;
 }
 
 .input-file-wrapper .input-file-upload {
-    padding: 10px;
     border: 1px dashed black;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translateY(-50%) translateX(-50%);
-    width: 157px;
-    height: 42px;
+    width: calc(100% - 30px);
+    height: calc(100% - 30px);
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
@@ -225,9 +237,13 @@ form.search button {
     border-radius: 8px;
 }
 
+.input-file-wrapper input:hover+.input-file-overlay .input-file-upload {
+    background-color: #ffefef;
+}
+
 
 /* ================== */
-@media screen and (max-width: 510px) {
+@media screen and (max-width: 525px) {
 
     header nav {
         padding: 5px;

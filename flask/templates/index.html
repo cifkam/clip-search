@@ -3,37 +3,37 @@
 {% block head %}
 <script type="text/javascript">
 function bodyOnload(){
+    addInputFileDragListener(document.querySelector("#image-search-form"));
     document.querySelector('#image-search-form input[type="file"]').onchange = function() {
         document.getElementById("image-search-form").submit();
     }
 
-    addInputFileDragListener(document.querySelector("#image-search-form"));
 };
 </script>
 {% endblock %}
 
 {% block body_attrs %}onload=bodyOnload(){% endblock %}
 
-{% block title %}Search{% endblock %}
-{% block heading %}Search{% endblock %}
+{% block title %}CLIP-Search{% endblock %}
+{% block heading %}CLIP-Search{% endblock %}
 
 {% block content %}
 
 Search by text:<br>
 <form class="search" action="/search/">
-    <input type="text" placeholder="Search.." name="q">
+    <input type="text" placeholder="Search.." name="q" style="width: 232px;">
     <button type="submit"><i class="fa fa-search"></i></button>
 </form>
 
 <br><br>
 
 Search by image:
-<form id="image-search-form" action="/search/" method="post" enctype="multipart/form-data" method="POST" onload="addInputFileDragListener(this)">
+<form id="image-search-form" action="/search/" method="post" enctype="multipart/form-data" method="POST">
     
     <div class="input-file-wrapper">
         <input type="file" name="upload" accept="image/*" class="drop-area" required>
         <div class="input-file-overlay">
-            <div class="input-file-upload"><i class="fa fa-cloud-upload"></i>Select image...</div>
+            <div class="input-file-upload"><i class="fa fa-cloud-upload"></i>Select or drop an image...</div>
         </div>
     </div>
 </form>

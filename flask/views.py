@@ -2,15 +2,15 @@ from flask import render_template, request, send_from_directory, redirect, abort
 from PIL import Image
 from ImageManager import ImageManager
 from utils import LockingProgressBarThread, ReadWriteLock, acquire_read, acquire_write
-from settings import QUERY_K, MODEL_NAME, PREFER_CUDA, DB_IMAGES_ROOT
+from settings import settings
 
 class Views:
     thr = None
     
     def __init__(self) -> None:
         self.imanager = ImageManager(
-            model_name=MODEL_NAME,
-            prefer_cuda=PREFER_CUDA
+            model_name=settings.MODEL_NAME,
+            prefer_cuda=settings.PREFER_CUDA
         )
         self.rwlock = ReadWriteLock()
 
@@ -53,14 +53,14 @@ class Views:
             except Exception as e:
                 abort(415, e)
 
-            result = self.process_query_result(self.imanager.query_image(img, k=QUERY_K))
+            result = self.process_query_result(self.imanager.query_image(img, k=settings.QUERY_K))
             return render_template("results.html", result=result)
         
         elif 'q' in request.args and request.args['q'] != "":
             # Search by text
             text = request.args['q']
             print(f"Query: {text}")
-            result = self.process_query_result(self.imanager.query_text(text, k=QUERY_K))
+            result = self.process_query_result(self.imanager.query_text(text, k=settings.QUERY_K))
 
             return render_template("results.html", result=result)
         
@@ -75,7 +75,7 @@ class Views:
                 raise ValueError()
         except ValueError:
             abort(400)
-        result = self.process_query_result(self.imanager.query_id(id, k=QUERY_K))
+        result = self.process_query_result(self.imanager.query_id(id, k=settings.QUERY_K))
         return render_template("results.html", result=result)
 
     @progressbar_lock()
@@ -135,4 +135,4 @@ class Views:
         return render_template('error.html', title=title, description=description)
 
     def get_db_image(self, filename, as_attachment=False):
-        return send_from_directory(DB_IMAGES_ROOT, filename, as_attachment=False)
+        return send_from_directory(settings.DB_IMAGES_ROOT, filename, as_attachment=False)

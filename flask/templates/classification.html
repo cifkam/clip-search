@@ -30,13 +30,13 @@
 </script>
 {% endblock %}
 
-{% block title %}Image Classification{% endblock %}
+{% block title %}Image Classification - CLIP-Search{% endblock %}
 {% block heading%}Image Classification{% endblock %}
 {% block body_attrs %}onload="loadLabels()"{% endblock %}
 {% block content %}
 <div id="form-container">
     <form enctype="multipart/form-data" onsubmit="saveLabels(this)" method="POST">
-        <input type="file" name="upload" accept="image/*" class="drop-area" required><br>
+        <input type="file" name="upload" accept="image/*" class="drop-area" style="margin-bottom: 5px;width: 100%;" required><br>
         <textarea rows="15" cols="50" type="text" name="labels" required></textarea><br>
         <button type="submit" class="submit">Classify</button>
     </form>

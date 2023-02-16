@@ -1,29 +1,44 @@
-DEBUG = True
-USE_RELOADER = True
-SQLALCHEMY_TRACK_MODIFICATIONS = True
-
-PREFER_CUDA = True
-QUERY_K = 15
-
-#clip.available_models(): ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
-MODEL_NAME = "RN50"
-
-DB_IMAGES_ROOT = 'db_images'
-
-
-
 import json
+
 class Settings:
-    settings_path = 'settings.json'
+    settings_json_path = 'settings.json'
 
-    def __init__(self):
-        pass
+    def __check_exception(function):
+        def wrapper(*args,**kwargs):
+            try:
+                function(*args,**kwargs)
+                return True
+            except:
+                return False
+        return wrapper
 
-    def load_defaults():
-        pass
+    def load_defaults(self):
+        self.PREFER_CUDA = True
+        self.QUERY_K = 15
+        self.DB_IMAGES_ROOT = 'db_images'
+        #clip.available_models(): ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
+        self.MODEL_NAME = 'RN50'
+        self.SQLITE_DB_NAME = 'CLIPSearch.db'
 
-    def load():
-        pass
+        self.DEBUG=True
+        self.USE_RELOADER = True
+        self.SQLALCHEMY_TRACK_MODIFICATIONS = True
 
-    def save():
-        pass
+    @__check_exception
+    def load(self):
+        with open(Settings.settings_json_path, 'r') as f:
+            d = json.load(f)
+    
+        for key, value in d.items():
+            setattr(self, key, value)
+    
+    @__check_exception
+    def save(self):
+            with open(Settings.settings_json_path, 'w') as f:
+                json.dump(self.__dict__, f, indent='\t')
+
+
+settings = Settings()
+if not settings.load():
+    settings.load_defaults()
+    settings.save()
