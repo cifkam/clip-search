@@ -28,13 +28,14 @@ def index():
     #return redirect("/search/")
     return views.index()
 
-@app.route('/search/')
+
+@app.route('/search/', methods=['GET','POST'])
 def search():
     return views.search()
 
-@app.route('/image-search/', methods=['GET','POST'])
-def image_search():
-    return views.image_search()
+@app.route('/search/id/<id>')
+def search_by_id(id):
+    return views.search_by_id(id)
 
 @app.route('/classification/', methods=['GET','POST'])
 def classification():
@@ -51,6 +52,7 @@ def progress_status():
 @app.route('/db_images/<path:filename>')
 def get_file(filename):
     return views.get_db_image(filename)
+
 
 
 ###############################

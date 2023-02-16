@@ -28,7 +28,7 @@ body
 }
 
 header nav .search i {
-    padding: 14px 5px
+    padding: 10px 5px;
 }
 
 header nav .search i.fa-search:hover {
@@ -54,20 +54,27 @@ header nav ul {
     display: flex;
     list-style-type: none;
     margin: 0;
-    padding: 18px 0 18px 0;
+    flex-wrap: wrap;
+    padding-left: 0;
 }
 
 header nav ul li:first-child {
     margin-left: 0px;
 }
 
+header nav ul li{
+    padding: 18px 0 18px 0;
+}
+
+
 header nav ul li a {
     text-decoration: none;
     color: #333;
     border-radius: 10px;
     transition: all 0.2s ease-in-out;
-    padding: 10px 15px;
+    padding: 12px 15px;
     margin: 0 10px;
+    background-color: #eee;
 }
 
 header nav ul li a:hover {
@@ -80,7 +87,8 @@ header nav form {
     align-items: center;
     color: #333;
     border-radius: 10px;
-    margin: 5px 0 5px auto;
+    margin: 7px 0;
+    margin-left: auto;
 }
 
 input:focus{
@@ -93,7 +101,6 @@ header nav form input[type="text"] {
     font-size: 16px;
     padding: 0 15px;
     border: none;
-    height: 40px;
 }
 
 header nav form button {
@@ -108,9 +115,45 @@ header nav form button {
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+    /* position: relative; */
 }
 
-.gallery img {
-    width: 360px;
+.gallery-item {
     margin: 15px;
+    position: relative;
+}
+
+.gallery a.permalink {
+    position: absolute;
+    background-color: rgba(255,255,255 , 0.6);
+    top: 0;
+    right: 0;
+    display: none;
+}
+
+.gallery-item:hover a.permalink
+{
+    display: block;
+}
+
+.gallery a.permalink:hover {
+    filter: invert(1);
+}
+
+.gallery a.permalink svg {
+    margin: 8px;
+    display: block;
+    width: 25px;
+}
+
+.gallery a.search {
+    cursor: crosshair;
+}
+
+.gallery-item img {
+    width: 360px;
+    max-height: 95vh;
+    max-width: 95vw;
+    object-fit: contain;
+    display: block;
 }

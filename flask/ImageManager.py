@@ -33,13 +33,16 @@ class ImageManager:
     def images(self): return db.session.query(models.Image)
 
     def query_text(self, text, k=1):
-        return self.query(self.clip.text2vec(text), k=k)
+        return self.query(self.clip.text2vec(text).cpu().numpy(), k=k)
     
     def query_image(self, image, k=1):
-        return self.query(self.clip.img2vec(image), k=k)
+        return self.query(self.clip.img2vec(image).cpu().numpy(), k=k)
+    
+    def query_id(self, id, k=1):
+        return self.query(self.kdtree.data[id-1], k=k)
     
     def query(self, embedding, k=1):
-        indices = self.kdtree.query(embedding.cpu().numpy(), k=k)[1].reshape(-1)
+        indices = self.kdtree.query(embedding, k=k)[1].reshape(-1)
         indices = 1 + indices[indices < self.kdtree.data.shape[0]]
         db_query = list( models.Image.query.filter(models.Image.id.in_(indices.tolist())).order_by(models.Image.id) )
 

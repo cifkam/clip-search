@@ -5,6 +5,19 @@
 
 {% block content %}
 <form method="POST">
-    <input type="submit">
+    Dummy model selector: <select>
+        <option value="RN50" selected="selected">RN50</option>
+        <option value="RN101">RN101</option>
+        <option value="RN50x4">RN50x4</option>
+        <option value="RN50x16">RN50x16</option>
+        <option value="RN50x64">RN50x64</option>
+        <option value="ViT-B/32">ViT-B/32</option>
+        <option value="ViT-B/16">ViT-B/16</option>
+        <option value="ViT-L/14">ViT-L/14</option>
+        <option value="ViT-L/14@336px">ViT-L/14@336px</option>
+    </select>
+    <br>
+    <button type="submit" name="action" value="save">Save</button>
+    <button type="submit" name="action" value="refresh">Save & refresh</button>
 </form>
 {% endblock %}

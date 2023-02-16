@@ -9,3 +9,21 @@ QUERY_K = 15
 MODEL_NAME = "RN50"
 
 DB_IMAGES_ROOT = 'db_images'
+
+
+
+import json
+class Settings:
+    settings_path = 'settings.json'
+
+    def __init__(self):
+        pass
+
+    def load_defaults():
+        pass
+
+    def load():
+        pass
+
+    def save():
+        pass
