@@ -241,6 +241,26 @@ form.search button {
     background-color: #ffefef;
 }
 
+/* ====== .page-control ====== */
+nav.page-control a {
+    color: black;
+    text-decoration: none;
+    background-color: white;
+    padding: 12px 15px;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    display: inline-block;
+}
+
+nav.page-control a:hover{
+    background-color: #555;
+    color: #fff;
+}
+
+nav.page-control {
+    margin: 10px;
+    text-align: right;
+}
 
 /* ================== */
 @media screen and (max-width: 525px) {

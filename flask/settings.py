@@ -19,6 +19,8 @@ class Settings:
         #clip.available_models(): ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64', 'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
         self.MODEL_NAME = 'RN50'
         self.SQLITE_DB_NAME = 'CLIPSearch.db'
+        self.TAG_EMBED_CACHE_TTL = 15*60 # 15 minutes before expiration
+        self.TAG_EMBED_CACHE_SIZE = 32
 
         self.DEBUG=True
         self.USE_RELOADER = True

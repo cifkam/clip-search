@@ -6,6 +6,11 @@
 
 {% block content %}
 
+<nav class="page-control">
+    {% if prev_href %}<a class="" href={{prev_href}}>Previous</a>{% endif %}
+    {% if next_href %}<a class="" href={{next_href}}>Next</a>{% endif %}
+</nav>
+
 <div class="gallery">
     {% for value in result %}
     <div class="gallery-item">
@@ -16,5 +21,11 @@
     </div>
     {% endfor %}
 </div>
+
+<nav class="page-control">
+    {% if prev_href %}<a class="" href={{prev_href}}>Previous</a>{% endif %}
+    {% if next_href %}<a class="" href={{next_href}}>Next</a>{% endif %}
+</nav>
+
 
 {% endblock %}

@@ -26,14 +26,20 @@ with app.app_context():
 # === endpoints === #
 @app.route('/')
 def index():
-    #return redirect("/search/")
     return views.index()
 
-
+#  [GET] /search/             (default search page)
+#  [GET] /search/?q=something (text search)
+# [POST] /search/             (image search)
 @app.route('/search/', methods=['GET','POST'])
 def search():
     return views.search()
 
+@app.route('/search/img/<tag>')
+def search_cached(tag):
+    return views.search_cached(tag)
+
+# search by image from databse
 @app.route('/search/id/<id>')
 def search_by_id(id):
     return views.search_by_id(id)
@@ -53,6 +59,10 @@ def progress_status():
 @app.route('/db_images/<path:filename>')
 def get_file(filename):
     return views.get_db_image(filename)
+
+@app.route('/session_id/')
+def session_id():
+    return views.session_id()
 
 
 

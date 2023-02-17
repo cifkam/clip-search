@@ -38,6 +38,9 @@ class ImageManager:
     def query_image(self, image, k=1):
         return self.query(self.clip.img2vec(image).cpu().numpy(), k=k)
     
+    def embed_image(self, image):
+        return self.clip.img2vec(image).cpu().numpy()    
+
     def query_id(self, id, k=1):
         return self.query(self.kdtree.data[id-1], k=k)
     
