@@ -8,6 +8,18 @@ body#page-progress main
     text-align: center;
 }
 
+code {
+    border: 1px solid black;
+    padding: 20px;
+    margin: 15px 0;
+    display: block;
+}
+
+code.error {
+    color: darkred;
+    border: 1px solid darkred;
+}
+
 progress
 {
     width: 200px;

@@ -1,23 +1,37 @@
 {% extends "base.html" %}
 
+{% block head %}
+<script type="text/javascript">
+function body_onload()
+{
+    
+}
+</script>
+{% endblock %}
+
 {% block title %}Settings - CLIP-Search{% endblock %}
 {% block heading %}Settings{% endblock %}
 
+{% block body_attrs %}onload=body_onload(){% endblock %}
 {% block content %}
+{% if error_msg %}<code class="error">{{error_msg}}</code>{% endif %}
+
 <form method="POST">
-    Dummy model selector: <select>
-        <option value="RN50" selected="selected">RN50</option>
-        <option value="RN101">RN101</option>
-        <option value="RN50x4">RN50x4</option>
-        <option value="RN50x16">RN50x16</option>
-        <option value="RN50x64">RN50x64</option>
-        <option value="ViT-B/32">ViT-B/32</option>
-        <option value="ViT-B/16">ViT-B/16</option>
-        <option value="ViT-L/14">ViT-L/14</option>
-        <option value="ViT-L/14@336px">ViT-L/14@336px</option>
-    </select>
+    Dummy model selector:
+    <select name="model" id="model">
+        {% for model in models %}
+        <option value={{model}} {% if model == model_selected %}selected="selected"{% endif %}>{{model}}</option>
+        {% endfor %}
+    </select><br>
+    Results per page:
+    <select name="results_per_page" id="results_per_page">
+        {% for k in results_per_page %}
+        <option value={{k}} {% if k==results_per_page_selected %}selected="selected"{% endif %}>{{k}}</option>
+        {% endfor %}
+    </select><br>
     <br>
     <button type="submit" name="action" value="save">Save</button>
-    <button type="submit" name="action" value="refresh">Save & refresh</button>
+    <button type="submit" name="action" value="refresh">Save & Refresh</button>
+    <button type="submit" name="action" value="reset">Full Reset</button>
 </form>
 {% endblock %}

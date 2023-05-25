@@ -53,4 +53,4 @@ function httpGet(theUrl)
 }
 
 
-setCookie("session_id", httpGet("/session_id"), 1); // get or validate current session_id
+setCookie("session_id", httpGet("/session_id"), 1); // get or validate current session_id (with 1 day expiration)
