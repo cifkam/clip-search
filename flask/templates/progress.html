@@ -5,12 +5,16 @@
 function check_progress(bar) {
     function worker() {
         $.get('/progress_status', function(progress) {
-            if (progress < 0.0)
+            var json = JSON.parse(progress)
+            document.getElementById("heading").innerText = json.title
+            document.getElementById("description").innerText = json.description
+
+            if (json.progress < 0.0)
                 bar.removeAttribute("value")
             else
-                bar.value = progress
+                bar.value = json.progress
   
-            if (progress < 1.0)
+            if (json.progress < 1.0)
                 setTimeout(worker, 1000)
             else
                 location.reload()
@@ -31,6 +35,6 @@ function start_progressbar(id)
 {% block body_attrs %} id="page-progress" onload='start_progressbar("progressbar")'{% endblock %}
 
 {% block content %}
-<p>{{description}}</p>
+<p id="description">{{description}}</p>
 <progress id="progressbar" value="0.0" max="1.0"></progress>
 {% endblock %}

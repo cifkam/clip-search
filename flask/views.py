@@ -7,16 +7,18 @@ from itertools import islice
 from EmbeddingTagCache import EmbeddingTagCache
 import secrets
 import clip
+import json
 from time import sleep
 import functools
 
 class Views:
     thr = None
 
-    def __init__(self) -> None:
+    def __init__(self, app, runner_conn=None) -> None:
+        self.app = app
+        self.runner_conn = runner_conn
         self.load_image_manager()
         self.progressbar_rwlock = ReadWriteLock()
-        self.progressbar_title = ""
         self.progressbar_description = ""
         self.embedding_tag_cache = EmbeddingTagCache()
         self.session_ids = set()
@@ -44,17 +46,22 @@ class Views:
                     else:
                         # Else just show page with progressbar
                         return render_template(
-                            "progress.html", title=self.progressbar_title, description=self.progressbar_description
+                            "progress.html"
+                            #,title=self.thr.title, description=self.thr.description
                         )
 
             return wrapper
 
         return decorator
 
-    def load_image_manager(self):
+    def  load_image_manager(self, create_new_kdtree=True):
         self.imanager = ImageManager(
             model_name=settings.MODEL_NAME, prefer_cuda=settings.PREFER_CUDA
         )
+
+        if create_new_kdtree and self.imanager.kdtree is None:
+            print("Kdtree not found, building new...")
+            self.imanager.full_refresh()
 
     @staticmethod
     def process_query_result(result, page=1):
@@ -270,26 +277,28 @@ class Views:
                         )
                         self.thr.start()
 
-        def func_save(thr=None):
-            thr.title = "Trying to load new model..."
-            # 3. clear self.embedding_tag_cache
-            self.embedding_tag_cache = EmbeddingTagCache()
-            self.load_image_manager()
-            if self.imanager.kdtree is None:
-                settings.set_values(backup)
-                settings.save()
-                self.load_image_manager()
-            return True
+        def func_restart(thr=None):
+            with self.app.app_context():
+                thr.title = "Restarting"
+                thr.description = "Application is restarting. Please reload the page in a few seconds."
+
+                if self.runner_conn is not None:
+                    self.runner_conn.send("restart")
+                    self.runner_conn.close()
+                    
+                sleep(10)
+                return True
 
         def func_refresh(thr=None):
-            thr.title = "Trying to load new model..."
-            # 3. clear self.embedding_tag_cache
-            self.embedding_tag_cache = EmbeddingTagCache()
-            self.load_image_manager()
+            with self.app.app_context():
+                thr.title = "Trying to load new model..."
+                # 3. clear self.embedding_tag_cache
+                self.embedding_tag_cache = EmbeddingTagCache()
+                self.load_image_manager()
 
-            thr.title = "Refreshing the database..."
-            #TODO: RELOAD APP AND REFRESH! 
-            return True
+                thr.title = "Refreshing the database..."
+                #TODO: REFRESH DATABASE 
+                return True
 
         if action == "save":
             print("action: save")
@@ -301,15 +310,19 @@ class Views:
             if not set_and_save_settings():
                 return self.render_settings(error_msg="Error: Couldn't save settings!")
             
-            try_lock_and_run([(func_save, None)])
-            return redirect("/settings")
-
+            if model_change:
+                try_lock_and_run([(func_restart, None)])
+                return redirect("/settings")
+        else:
+            raise Exception(f'Settings: Received unknown action "{action}"!')
+        
+        """
         elif action == "refresh":
             print("action: refresh")
             # TODO:
             # 1. Set settings and save it to json
             # 2. clear self.embedding_tag_cache
-            # 3. try to load self.immanager with new model name, and refresh the database
+            # 3. try to load self.imanager with new model name, and refresh the database
             # and create new kdtree (and save it to file)
             if not set_and_save_settings():
                 return self.render_settings(error_msg="Error: Couldn't save settings!")
@@ -328,49 +341,16 @@ class Views:
             self.embedding_tag_cache = EmbeddingTagCache()
             # 3. similar to 'refresh' but clear the databse and kdtree
             # and create it from scratch, instead of refreshing it
+        """
 
-        else:
-            raise Exception(f'Settings: Received unknown action "{action}"!')
-
-        import time
-
-        # TODO: This is just for testing, remove it later and replace with a proper implementation
-        # Try to acquire_write (unique access)
-        with acquire_write(self.progressbar_rwlock, True, 1.0) as success:
-            # If acquired and EITHER there was no previous self.thr OR it has already finished:
-            if success and (self.thr is None or self.thr.progress == 1.0):
-                # Start a new thread with our function (and with unique lock)
-
-                def fn_a(x, thr=None):
-                    thr.title = "A"
-                    time.sleep(1)
-
-                def fn_b(thr=None):
-                    thr.title = "B"
-                    time.sleep(5)
-
-                self.progressbar_title = "Testing"
-                self.progressbar_description = "Testing description"
-                self.thr = LockingProgressBarThread.from_composite(
-                    self.progressbar_rwlock, [(fn_a, list(range(5))), (fn_b, None), (fn_a, list(range(5)))]
-                )
-                #
-                # self.thr = LockingProgressBarThread.from_function_collection(
-                #    self.progressbar_rwlock, lambda x: time.sleep(1), list(range(5))
-                # )
-                # self.thr = LockingProgressBarThread.from_function(
-                #    self.progressbar_rwlock,
-                #    lambda: time.sleep(5))
-                self.thr.start()
-
-        return redirect("/settings")
+        return redirect("/settings/")
 
     def progress_status(self):
         if self.thr is None:
-            return "1.0"
+            return json.dumps({"progress": 1.0, "title":"Something is coming", "description":"Please wait..."})
         else:
-            return str(self.thr.progress)
-
+            return json.dumps({"progress": self.thr.progress, "title": self.thr.title, "description": self.thr.description})
+        
     def session_id(self):
         if "session_id" in request.cookies:
             id = request.cookies["session_id"]
@@ -390,17 +370,16 @@ class Views:
         return render_template("error.html", title=title, description=description)
     
 
-    def shutdown(self, conn):
+    def shutdown(self):
         with acquire_write(self.progressbar_rwlock, True, 1.0) as success:
             # If acquired and EITHER there was no previous self.thr
             # OR there was and it has already finished:
             if success and (self.thr is None or self.thr.progress == 1.0):
                 # Start a new thread with our function (and with unique lock)
                 
-                self.progressbar_title = "Shutting down"
-                self.progressbar_description = "The application is shutting down..."
-                
                 def dummy_func(thr, secs=10):
+                    thr.title = "Shutting down"
+                    thr.description = "The application is shutting down... Refresh the page to check if it's still running."
                     sleep(10)
 
                 self.thr = LockingProgressBarThread.from_function(
@@ -412,23 +391,22 @@ class Views:
                     title="Couldn't shutdown the application",
                     description="Application shutting down failed, please try again in a moment.")
             
-        if conn is not None:
-            conn.send("shutdown")
-            conn.close()
+        if self.runner_conn is not None:
+            self.runner_conn.send("shutdown")
+            self.runner_conn.close()
 
         return redirect("/")
 
-    def restart(self, conn=None):
+    def restart(self):
         with acquire_write(self.progressbar_rwlock, True, 1.0) as success:
             # If acquired and EITHER there was no previous self.thr
             # OR there was and it has already finished:
             if success and (self.thr is None or self.thr.progress == 1.0):
                 # Start a new thread with our function (and with unique lock)
                 
-                self.progressbar_title = "Restarting"
-                self.progressbar_description = "The application is restarting. Please reload the page in a few seconds..."
-                
                 def dummy_func(thr, secs=10):
+                    thr.title = "Restarting"
+                    thr.description = "The application is restarting. Please reload the page in a few seconds..."
                     sleep(10)
 
                 self.thr = LockingProgressBarThread.from_function(
@@ -438,12 +416,65 @@ class Views:
             else:
                 return render_template("error.html",
                     title="Couldn't restart the application",
-                    description="Application restarting failed, please try again in a moment.")
+                    description="Application restarting failed, please reload the page and try again in a moment.")
             
-        if conn is not None:
-            conn.send("restart")
-            conn.close()
+        if self.runner_conn is not None:
+            self.runner_conn.send("restart")
+            self.runner_conn.close()
 
         return redirect("/")
     
+    def db_reset(self):
+        with acquire_write(self.progressbar_rwlock, True, 1.0) as success:
+            # If acquired and EITHER there was no previous self.thr
+            # OR there was and it has already finished:
+            if success and (self.thr is None or self.thr.progress == 1.0):
+                # Start a new thread with our function (and with unique lock)
+                
+                def refresh_function(thr):
+                    thr.title = "Resetting library"
+                    thr.description = "The database is being refreshed. Please wait... The page will reload automatically."
 
+                    self.embedding_tag_cache = EmbeddingTagCache()
+                    with self.app.app_context():
+                        for gen, n, description in self.imanager.get_full_refresh_generators():
+                            thr.description = description
+                            for i, _ in enumerate(gen):
+                                thr.progress = i/n
+
+                self.thr = LockingProgressBarThread.from_function(
+                    self.progressbar_rwlock, refresh_function)
+                self.thr.start()
+
+            else:
+                return render_template("error.html",
+                    title="Couldn't reset the library",
+                    description="Library resetting failed, please reload the page and try again in a moment.")
+        return redirect("/settings/")
+
+    def db_refresh(self):
+        with acquire_write(self.progressbar_rwlock, True, 1.0) as success:
+            # If acquired and EITHER there was no previous self.thr
+            # OR there was and it has already finished:
+            if success and (self.thr is None or self.thr.progress == 1.0):
+                # Start a new thread with our function (and with unique lock)
+                
+                def refresh_function(thr):
+                    thr.title = "Refreshing library"
+                    thr.description = "The database is being refreshed. Please wait... The page will reload automatically."
+
+                    with self.app.app_context():
+                        for gen, n, description in self.imanager.get_refresh_generators():
+                            thr.description = description
+                            for i, _ in enumerate(gen):
+                                thr.progress = i/n
+
+                self.thr = LockingProgressBarThread.from_function(
+                    self.progressbar_rwlock, refresh_function)
+                self.thr.start()
+
+            else:
+                return render_template("error.html",
+                    title="Couldn't refresh the library",
+                    description="Library refreshing failed, please reload the page and try again in a moment.")
+        return redirect("/settings/")

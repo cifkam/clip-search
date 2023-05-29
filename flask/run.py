@@ -1,19 +1,18 @@
+import os
+import secrets
 from multiprocessing import Process
 from multiprocessing.connection import Listener, Client
+from pathlib import Path
 from datetime import datetime
 from settings import settings
-from pathlib import Path
-import sys
-import os
-from time import sleep
 
+local_passwd = secrets.token_bytes(16)
 
 def process_main():
-    
     from app import run_app, FlaskExitException
 
     address = ('localhost', settings.LOCALHOST_PORT)
-    conn = Client(address, authkey=settings.LOCALHOST_PASSWD.encode('utf8'))
+    conn = Client(address, authkey=local_passwd)
 
     #filename = log_dir / ("log-" + datetime.now().strftime("%Y-%m-%d_%M-%H-%S") + ".txt")
     #with open(str(filename), "w", buffering=1) as f:
@@ -41,10 +40,11 @@ def main():
     process = None
     conn = None
     address = ('localhost', settings.LOCALHOST_PORT)
-    listener = Listener(address, authkey=settings.LOCALHOST_PASSWD.encode('utf8'))
+    listener = Listener(address, authkey=local_passwd)
 
     def start_app():
         nonlocal process, conn
+        settings.load()
         process = run_process()
         print("Waiting for connection...")
         conn = listener.accept()

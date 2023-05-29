@@ -93,8 +93,8 @@ class LockingProgressBarThread(threading.Thread):
         self.progress = -1.0
         self.fn = fn
         self.rwlock = rwlock
-        self.title = None
-        self.description = None
+        self.title = "Something is coming"
+        self.description = "Please wait..."
 
         super().__init__()
 

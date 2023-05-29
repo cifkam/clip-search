@@ -17,6 +17,7 @@ def run_app(conn=None, log_file=None):
         sys.stdout = log_file
 
 
+    print(f"Using model: {settings.MODEL_NAME}")
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + settings.MODEL_NAME.replace("/", "_") + '.db'
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = settings.SQLALCHEMY_TRACK_MODIFICATIONS
@@ -24,11 +25,15 @@ def run_app(conn=None, log_file=None):
 
     # Prevent from loading the CLIP model twice on startup and when reloading
     # if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-    views = Views()
-    progress_thr = None
+    
+    app.app_context().push()
+    db.create_all()
 
-    with app.app_context():
-        db.create_all()
+    views = Views(app, conn)
+
+
+    #with app.app_context():
+    #    db.create_all()
 
 
     # === endpoints === #
@@ -59,14 +64,9 @@ def run_app(conn=None, log_file=None):
     @app.route("/classification/", methods=["GET", "POST"])
     def classification():
         return views.classification()
+    
 
-
-    @app.route("/settings/", methods=["GET", "POST"])
-    def settings_page():
-        return views.settings()
-
-
-    @app.route("/progress_status")
+    @app.route("/progress_status/")
     def progress_status():
         return views.progress_status()
 
@@ -80,16 +80,25 @@ def run_app(conn=None, log_file=None):
     def session_id():
         return views.session_id()
 
+    @app.route("/settings/", methods=["GET", "POST"])
+    def settings_page():
+        return views.settings()
 
-    @app.route("/shutdown/")
-    def shutdown():
-        return views.shutdown(conn)
-    
-    @app.route("/restart/")
+    @app.route("/settings/restart/")
     def restart():
-        return views.restart(conn)
+        return views.restart()
         
+    @app.route("/settings/shutdown/")
+    def shutdown():
+        return views.shutdown()
 
+    @app.route("/settings/db_refresh/")
+    def db_refresh():
+        return views.db_refresh()
+
+    @app.route("/settings/db_reset/")
+    def db_reset():
+        return views.db_reset()
 
     ###############################
     @app.errorhandler(werkzeug.exceptions.HTTPException)

@@ -57,6 +57,13 @@ main {
     margin: 0px 25px;
 }
 
+
+hr {
+    margin: 15px 0;
+}
+
+
+
 header nav {
     display: flex;
     background-color: #fff;

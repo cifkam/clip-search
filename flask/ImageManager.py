@@ -52,6 +52,7 @@ class ImageManager:
         return self.query(self.kdtree.data[id - 1], k=k)
 
     def query(self, embedding, k=1):
+
         indices = self.kdtree.query(embedding, k=k)[1].reshape(-1)
         indices = 1 + indices[indices < self.kdtree.data.shape[0]]
         db_query = models.Image.query.filter(
@@ -65,14 +66,14 @@ class ImageManager:
         return db_query
 
     def create_kdtree(self, data):
-        filename = f"kdtree_{self.model_name.replace('/','-')}.pkl"
+        filename = f"kdtrees/kdtree_{self.model_name.replace('/','-')}.pkl"
         kdtree = KDTree(data)
         with open(filename, "wb") as f:
             pickle.dump(kdtree, f)
         self.kdtree = kdtree
 
     def try_load_kdtree(self):
-        filename = f"kdtree_{self.model_name.replace('/','-')}.pkl"
+        filename = f"kdtrees/kdtree_{self.model_name.replace('/','-')}.pkl"
         if Path(filename).is_file():
             with open(filename, "rb") as f:
                 self.kdtree = pickle.load(f)
@@ -88,14 +89,23 @@ class ImageManager:
             with torch.no_grad():
                 return self.clip.img2vec(img)
 
+    def get_full_refresh_generators(self):
+        self.clear_all()
+        yield from self.get_init_generators()
+
     def full_refresh(self):
         self.clear_all()
         self.init()
 
-    def refresh(self, progress_bar=True):
+    def refresh(self):
+        for gen, n, description in self.get_refresh_generators():
+            for _ in gen: # Execute the generator, ignore the outputs (None)
+                pass
+
+    def get_refresh_generators(self):
         dir = settings.DB_IMAGES_ROOT
 
-        # Find missing files   and   files that are already present
+        # Find missing files and files that are already present
         db_paths = set(map(lambda x: x.path, self.images()))
         dir_paths = set(self.find_images(dir))
 
@@ -114,66 +124,88 @@ class ImageManager:
         self.clear_all()
 
         # Add old images to the database and update the embeddings if necessary
-        print("Adding and updating old images:")
-        if progress_bar:
-            imgs = tqdm(list(enumerate(intersection)), ncols=100)
-        else:
-            imgs = tqdm(enumerate(intersection), ncols=100)
-
-        for i, old_img in imgs:
-            new_img = self.insert_image(old_img.path)
-            if old_img.timestamp != new_img.timestamp:
-                old_data[i] = self.get_embedding(new_img.path)
+        def update_images(imgs):
+            print("Adding and updating old images:")
+            for i, old_img in imgs:
+                yield
+                new_img = self.insert_image(old_img.path)
+                if old_img.timestamp != new_img.timestamp:
+                    old_data[i] = self.get_embedding(new_img.path)
+        
+        imgs = tqdm(list(enumerate(intersection)), ncols=100)
+        yield update_images(imgs), len(imgs), "Updating old images..."
 
         # Add new images to the databse
-        print("Adding new images:")
         new_data = []
-        missing = tqdm(missing, ncols=100) if progress_bar else missing
-        for file in missing:
-            self.insert_image(file)
-            embedding = self.get_embedding(file)
-            new_data.append(embedding)
+        def add_images(missing):
+            print("Adding new images:")
+            for file in missing:
+                yield
+                self.insert_image(file)
+                embedding = self.get_embedding(file)
+                new_data.append(embedding)
+        
+        missing = tqdm(missing, ncols=100)
+        yield add_images(missing), len(missing), "Adding new images..."
 
-        if len(new_data) == 0:
-            data = old_data
-        else:
-            new_data = torch.cat(new_data).cpu().numpy()
-            if old_data is not None:
-                data = np.concatenate([old_data, new_data], axis=0)
+        def finish():
+            nonlocal new_data, old_data
+            yield
+            if len(new_data) == 0:
+                data = old_data
             else:
-                data = new_data
+                new_data = torch.cat(new_data).cpu().numpy()
+                if old_data is not None:
+                    data = np.concatenate([old_data, new_data], axis=0)
+                else:
+                    data = new_data
 
-        try:
-            db.session.commit()
-            print("Building k-d tree")
-            self.create_kdtree(data)
-        except Exception as e:
-            db.session.rollback()
-            raise e
+            try:
+                db.session.commit()
+                print("Building k-d tree")
+                self.create_kdtree(data)
+            except Exception as e:
+                db.session.rollback()
+                raise 
+        
+        yield finish(), -1, "Finishing up"
+        
+    def get_init_generators(self):
+        data = None
+        
+        def add_images(paths):
+            nonlocal data
+            print("Adding new images:")
+            vectors = []
+            for file in paths:
+                yield
+                self.insert_image(file)
+                embedding = self.get_embedding(file)
+                vectors.append(embedding)
+    
+            data = torch.cat(vectors).cpu().numpy()
 
-    def init(self, progress_bar=True):
-        dir = settings.DB_IMAGES_ROOT
-        vectors = []
+            
+        paths = tqdm(list(self.find_images(settings.DB_IMAGES_ROOT)), ncols=100)
+        yield add_images(paths), len(paths), "Adding new images..."
 
-        if progress_bar:
-            paths = tqdm(list(self.find_images(dir)), ncols=100)
-        else:
-            self.find_images(dir)
+        def finish():
+            nonlocal data
+            yield
+            try:
+                db.session.commit()
+                print("Building k-d tree")
+                self.create_kdtree(data)
+            except Exception as e:
+                db.session.rollback()
+                raise e
+        
+        yield finish(), -1, "Finishing up"
 
-        for file in paths:
-            self.insert_image(file)
-            embedding = self.get_embedding(file)
-            vectors.append(embedding)
-
-        data = torch.cat(vectors).cpu().numpy()
-
-        try:
-            db.session.commit()
-            print("Building k-d tree")
-            self.create_kdtree(data)
-        except Exception as e:
-            db.session.rollback()
-            raise e
+    def init(self):
+        for gen, n, description in self.get_init_generators():
+            for _ in gen: # Execute the generator, ignore the outputs (None)
+                pass
 
     def update_by_path(self, path):
         img = models.Image.query.filter_by(path=path).first()
