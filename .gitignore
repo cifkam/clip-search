@@ -1,16 +1,11 @@
 /cpu-venv/
 /cuda-venv/
 __pycache__/
-/flask/CLIPSearch.db
-/flask/CLIPSearch.db-journal
 /flask/instance/
-/flask/kdtree_*.pkl
-/flask/db_images/ILSVRC2017_test
-/flask/db_images/db_images
-/flask/backup
-/flask/settings.json
+/flask/kdtrees/
 /flask/logs/
 /flask/db_images/
+/flask/settings.json
 *.npy
 *.pt
 

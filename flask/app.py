@@ -6,11 +6,12 @@ class FlaskExitException(Exception):
 
 def run_app(conn=None, log_file=None):
     import werkzeug.exceptions
-    from flask import Flask, request, render_template
+    from flask import Flask
     from models import db
     from views import Views
     from settings import settings
     import sys
+    import waitress
 
     if log_file is not None:
         sys.stderr = log_file
@@ -120,7 +121,11 @@ def run_app(conn=None, log_file=None):
 
     ###############################
 
-    app.run(debug=settings.DEBUG, use_reloader=settings.USE_RELOADER)
+    if settings.DEBUG:
+        app.run(debug=settings.DEBUG, use_reloader=settings.USE_RELOADER)
+    else:
+        print(f"Starting waitress server on http://127.0.0.1:{settings.SERVER_PORT}")
+        waitress.serve(app, host="0.0.0.0", port=settings.SERVER_PORT, threads=6)
     
 if __name__ == "__main__":    
     run_app()

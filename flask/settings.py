@@ -21,7 +21,6 @@ class Settings:
         # clip.available_models(): ['RN50', 'RN101', 'RN50x4', 'RN50x16', 'RN50x64',
         #                           'ViT-B/32', 'ViT-B/16', 'ViT-L/14', 'ViT-L/14@336px']
         self.MODEL_NAME = "RN50"
-        #self.SQLITE_DB_NAME = "CLIPSearch.db"
 
         self.TAG_EMBED_CACHE_TTL = 15 * 60  # 15 minutes before expiration
         self.TAG_EMBED_CACHE_SIZE = 32
@@ -30,7 +29,8 @@ class Settings:
         self.USE_RELOADER = False
         self.SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-        self.LOCALHOST_PORT = 16060
+        self.SERVER_PORT = 5000
+        self.RUNNER_PORT = 16060
 
     def get_values(self):
         return dict(self.__dict__)
@@ -41,6 +41,7 @@ class Settings:
 
     @__check_exception
     def load(self):
+        self.load_defaults()
         with open(Settings.settings_json_path, "r") as f:
             d = json.load(f)
             print("Loading settins.json...")

@@ -6,13 +6,13 @@ from pathlib import Path
 from datetime import datetime
 from settings import settings
 
-local_passwd = secrets.token_bytes(16)
+runner_passwd = secrets.token_bytes(16)
 
 def process_main():
-    from app import run_app, FlaskExitException
+    from app import run_app
 
-    address = ('localhost', settings.LOCALHOST_PORT)
-    conn = Client(address, authkey=local_passwd)
+    address = ('localhost', settings.RUNNER_PORT)
+    conn = Client(address, authkey=runner_passwd)
 
     #filename = log_dir / ("log-" + datetime.now().strftime("%Y-%m-%d_%M-%H-%S") + ".txt")
     #with open(str(filename), "w", buffering=1) as f:
@@ -39,8 +39,8 @@ def main():
 
     process = None
     conn = None
-    address = ('localhost', settings.LOCALHOST_PORT)
-    listener = Listener(address, authkey=local_passwd)
+    address = ('localhost', settings.RUNNER_PORT)
+    listener = Listener(address, authkey=runner_passwd)
 
     def start_app():
         nonlocal process, conn

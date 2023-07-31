@@ -11,17 +11,21 @@ import json
 from time import sleep
 import functools
 
+HTTP_BAD_REQUEST = 400
+HTTP_UNSUPPORTED_MEDIA_TYPE = 415
+
 class Views:
     thr = None
 
     def __init__(self, app, runner_conn=None) -> None:
         self.app = app
         self.runner_conn = runner_conn
-        self.load_image_manager()
         self.progressbar_rwlock = ReadWriteLock()
         self.progressbar_description = ""
         self.embedding_tag_cache = EmbeddingTagCache()
         self.session_ids = set()
+        
+        self.load_image_manager()
 
     def progressbar_lock(title="Something is comming...", description="Oh no! You have to wait for a while...",
             *, write=False, blocking=True, timeout=0.5, progress_unknown=False
@@ -175,7 +179,7 @@ class Views:
             try:
                 img = Image.open(request.files["upload"])
             except Exception as e:
-                abort(415, e)
+                abort(HTTP_UNSUPPORTED_MEDIA_TYPE, e)
 
             cookies = request.cookies
             if (
@@ -202,7 +206,7 @@ class Views:
     def search_by_id(self, id):
         id = self.parse_int(id)
         if id is None or id < 1:
-            abort(400)
+            abort(HTTP_BAD_REQUEST)
 
         if "page" in request.args and request.args["page"] != "":
             page = self.parse_int(request.args["page"])
@@ -224,7 +228,7 @@ class Views:
             try:
                 img = Image.open(request.files["upload"])
             except Exception as e:
-                abort(415, e)
+                abort(HTTP_UNSUPPORTED_MEDIA_TYPE, e)
 
             labels = list(filter(None, request.form["labels"].splitlines()))
             result = self.imanager.clip.classify(img, labels)
@@ -289,24 +293,8 @@ class Views:
                 sleep(10)
                 return True
 
-        def func_refresh(thr=None):
-            with self.app.app_context():
-                thr.title = "Trying to load new model..."
-                # 3. clear self.embedding_tag_cache
-                self.embedding_tag_cache = EmbeddingTagCache()
-                self.load_image_manager()
-
-                thr.title = "Refreshing the database..."
-                #TODO: REFRESH DATABASE 
-                return True
-
         if action == "save":
             print("action: save")
-            # TODO:
-            # 1. Set settings and save it to json
-            # 2. try to load self.immanger with new model name, but do not change neither
-            # the kdtree nor the database - if the kdtree file cannot be found, show
-            # the settings with some error notification
             if not set_and_save_settings():
                 return self.render_settings(error_msg="Error: Couldn't save settings!")
             
@@ -316,33 +304,6 @@ class Views:
         else:
             raise Exception(f'Settings: Received unknown action "{action}"!')
         
-        """
-        elif action == "refresh":
-            print("action: refresh")
-            # TODO:
-            # 1. Set settings and save it to json
-            # 2. clear self.embedding_tag_cache
-            # 3. try to load self.imanager with new model name, and refresh the database
-            # and create new kdtree (and save it to file)
-            if not set_and_save_settings():
-                return self.render_settings(error_msg="Error: Couldn't save settings!")
-            
-            self.progressbar_title = "Refreshing the database..."
-            self.progressbar_description = "This may take a while..."
-            try_lock_and_run([(func_refresh, None)])
-
-        elif action == "reset":
-            print("action: reset")
-            # TODO: !!!
-            # 1. Set settings and save it to json
-            if not set_and_save_settings():
-                return self.render_settings(error_msg="Error: Couldn't save settings!")
-            # 2. clear self.embedding_tag_cache
-            self.embedding_tag_cache = EmbeddingTagCache()
-            # 3. similar to 'refresh' but clear the databse and kdtree
-            # and create it from scratch, instead of refreshing it
-        """
-
         return redirect("/settings/")
 
     def progress_status(self):
