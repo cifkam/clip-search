@@ -58,6 +58,8 @@ Application settings can be changed on the [Settings page](http://127.0.0.1:5000
 #### Reseting and refreshing the image databse
 Whenever user adds, removes or changes an image in the image library, the application won't reflect the changes automatically. When this happens, user needs to reset or refresh the library. This can be done in settings of the application under "Library Control". "Refreshing" the library will automatically add new files, remove non-existing files and update embeddings of all the changed files. "Fully reseting" the library will remove all images from the database and re-embed all images in the directory from scratch.
 
+Note: Image embeddings are specific for each CLIP model and image library controls apply only for the currently selected CLIP model. Whenever you change the image files and refresh the library, the database files for other models will still be outdated. 
+
 ### Example images and models
 We provide a subset of images from the [Open Images Dataset](https://storage.googleapis.com/openimages/web/index.html) and already pre-computed embeddings for this subset. If you wish to try our application without waiting for the embeddings to create for you own images, you can follow the next steps:
 1. With your environment activated, go to `example_ds` directory and run the dataset downloader without any arguments:
@@ -72,7 +74,7 @@ We provide a subset of images from the [Open Images Dataset](https://storage.goo
    unzip clip-search-open_image_db.zip
    ```
 
-   After starting the application, you can start using our application directly
+   After running the application, you can start searching the images directly. 
 
 ## Documentation
 Please refer to [docs/doc.md](docs/doc.md).
