@@ -3,6 +3,10 @@ from settings import settings
 import sys
 import secrets
 
+"""
+Caches embeddings for pairs (tag, session_id),
+i.e. each user has his own cached embeddings.
+"""
 class EmbeddingTagCache:
     def __init__(self):
         self.cache = TTLCache(settings.TAG_EMBED_CACHE_SIZE, settings.TAG_EMBED_CACHE_TTL)

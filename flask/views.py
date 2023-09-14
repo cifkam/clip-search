@@ -9,6 +9,7 @@ import secrets
 import clip
 import json
 from time import sleep
+import urllib
 import functools
 
 HTTP_BAD_REQUEST = 400
@@ -107,7 +108,7 @@ class Views:
             prev_args = dict(args)
             prev_args["page"] = str(page - 1)
             prev_href = "?" + "&".join(
-                [f"{key}={value}" for key, value in prev_args.items()]
+                [f"{key}={urllib.parse.quote(value)}" for key, value in prev_args.items()]
             )
         else:
             prev_href = None
@@ -116,7 +117,7 @@ class Views:
             next_args = dict(args)
             next_args["page"] = str(page + 1)
             next_href = "?" + "&".join(
-                [f"{key}={value}" for key, value in next_args.items()]
+                [f"{key}={urllib.parse.quote(value)}" for key, value in next_args.items()]
             )
         else:
             next_href = None

@@ -6,7 +6,8 @@ CLIP-Search is an application for image search of user's image library using [Op
 
 - Image search using OpenAI's CLIP model
 - Choose between various CLIP models (ResNet/ViT variants)
-- Zero-shot classification for uploaded image and user*defined labels
+- "Browsing" by clicking on the image from search results to search again for similar images
+- Zero-shot classification for uploaded image and user-defined labels
 - Web-based interface for easy use (mainly intended to be used locally but can be theoretically modified to be used as a public web-server as well)
 
 ## Running the Application
@@ -14,6 +15,7 @@ CLIP-Search is an application for image search of user's image library using [Op
 To set up the required Python environment, you have two options: using `virtualenv` and our installation script or any other Python virtual environment manager like Anaconda or `venv` and installing the packages using the `requirements`` files.
 
 ### Installing virtual environment
+
 #### Using virtualenv
 
 1. Install `virtualenv` if you don't have it:
@@ -28,6 +30,7 @@ To set up the required Python environment, you have two options: using `virtuale
    ```
    ./setup-cpu-virtualenv.sh
    ```
+
 #### Using other virtual environment managers
 1. Create a Python virtual environment using your preferred manager (Anaconda/`venv`...).
 2. Activate the environment.

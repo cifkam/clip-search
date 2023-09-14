@@ -11,6 +11,8 @@ class CLIPWrapper:
         self.log(f"Model {model_name} loaded.")
 
     def Create(*, prefer_cuda=False, **kwargs):
+        # If prefer_cuda == True, try to load model on GPU
+        # If false or loading failed, load model on CPU
         try:
             return CLIPWrapper(prefer_cuda=prefer_cuda, **kwargs)
         except Exception as e:
