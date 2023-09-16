@@ -155,6 +155,8 @@ class Views:
         else:
             page = 1
 
+        print(f"Query (tag/image), page {page}: {tag}")
+
         try:
             embedding = self.embedding_tag_cache.get(tag, request.cookies["session_id"])
         except KeyError:
@@ -188,6 +190,7 @@ class Views:
                 or cookies["session_id"] not in self.session_ids
             ):
                 result = self.query_image(img, page)
+                print("Query (image, no session_id), page {page}")
                 return self.render_search_results(result, page, request.args)
             else:
                 embedding = self.imanager.embed_image(img)
@@ -197,7 +200,8 @@ class Views:
         elif "q" in request.args and request.args["q"] != "":
             # Search by text
             text = request.args["q"]
-            print(f"Query: {text}")
+            print(f"Query (text), page {page}: {text}")
+
             result = self.query_text(text, page)
             return self.render_search_results(result, page, request.args)
 
@@ -216,6 +220,7 @@ class Views:
         else:
             page = 1
 
+        print(f"Query (id), page {page}: {id}")
         result = self.query_id(id, page)
         return self.render_search_results(result, page, request.args)
 

@@ -1,6 +1,7 @@
 from contextlib import contextmanager, ExitStack
 from typing import Callable, Any, Sized, Generator, Tuple, Iterable, Optional
 import threading
+from math import ceil
 
 
 class ReadWriteLock:
@@ -159,3 +160,10 @@ class LockingProgressBarThread(threading.Thread):
         finally:
             self.rwlock.release_write()
             self.progress = 1.0
+
+
+
+def batched(iterable, k=16):
+    n = len(iterable)
+    for i in range(ceil(n/k)):
+        yield iterable[i*k : (i+1)*k]

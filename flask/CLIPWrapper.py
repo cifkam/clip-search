@@ -33,8 +33,17 @@ class CLIPWrapper:
         with torch.no_grad():
             img = self.preprocess(img).unsqueeze(0).to(self.device)
             return self.model.encode_image(img)
-        # image_features = self.model.encode_image(img)
-        # return image_features / image_features.norm(dim=-1, keepdim=True)
+            # return image_features / image_features.norm(dim=-1, keepdim=True)
+
+    def imgs2vec(self, imgs):
+        with torch.no_grad():
+            data = []
+            for img in imgs:
+                data.append(self.preprocess(img).unsqueeze(0).to(self.device))
+
+            return self.model.encode_image(torch.cat(data))
+            # return image_features / image_features.norm(dim=-1, keepdim=True)
+
 
     def text2vec(self, text):
         with torch.no_grad():

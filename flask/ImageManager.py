@@ -15,7 +15,7 @@ from glob import glob
 from models import db
 from CLIPWrapper import CLIPWrapper
 from tqdm import tqdm
-
+from utils import batched
 from settings import settings
 
 
@@ -96,8 +96,17 @@ class ImageManager:
     # Returns the embedding of the image given by path.
     def get_embedding(self, path):
         with PIL.Image.open(path) as img:
-            with torch.no_grad():
-                return self.clip.img2vec(img)
+            return self.clip.img2vec(img)
+    
+    def get_embeddings(self, paths):
+        data = []
+
+        for path in paths:
+            with PIL.Image.open(path) as img:
+                img.load()
+                data.append(img)
+
+        return self.clip.imgs2vec(data)
 
     # Clears the databse and kd-tree, and returns the action (generator) that
     # rebuilds the database and the k-d tree from scratch.
@@ -137,7 +146,7 @@ class ImageManager:
         ########################
         def update_images(imgs):
             print("Adding and updating old images:")
-            for i, old_img in imgs:
+            for i, old_img in enumerate(imgs):
                 yield
                 new_img = self.insert_image(old_img.path)
                 if old_img.timestamp != new_img.timestamp:
@@ -146,11 +155,12 @@ class ImageManager:
         new_data = []
         def add_images(missing):
             print("Adding new images:")
-            for file in missing:
+            for batch in missing:
                 yield
-                self.insert_image(file)
-                embedding = self.get_embedding(file)
-                new_data.append(embedding)
+                for file in batch:
+                    self.insert_image(file)
+                embeddings = self.get_embeddings(batch)
+                new_data.append(embeddings)
         ########################
         def finish():
             nonlocal new_data, old_data
@@ -193,11 +203,11 @@ class ImageManager:
         self.clear_all()
 
         # Add old images to the database and update the embeddings if necessary
-        imgs = tqdm(list(enumerate(intersection)), ncols=100)
+        imgs = tqdm(list(intersection), ncols=100)
         yield update_images(imgs), len(imgs), "Updating old images..."
 
         # Add new images to the databse
-        missing = tqdm(missing, ncols=100)
+        missing = tqdm(list(batched(list(missing), k=settings.BATCH_SIZE)), ncols=100)
         yield add_images(missing), len(missing), "Adding new images..."
 
         # Commit the changes to the database and rebuild the k-d tree
@@ -222,12 +232,20 @@ class ImageManager:
             nonlocal data
             print("Adding new images:")
             vectors = []
+
+            for batch in paths:
+                yield
+                for file in batch:
+                    self.insert_image(file)
+                embeddings = self.get_embeddings(batch)
+                vectors.append(embeddings)
+            """
             for file in paths:
                 yield
                 self.insert_image(file)
                 embedding = self.get_embedding(file)
                 vectors.append(embedding)
-    
+            """
             data = torch.cat(vectors).cpu().numpy()
         ########################
         def finish():
@@ -243,7 +261,7 @@ class ImageManager:
         ########################
         
         # Find images
-        paths = tqdm(list(self.find_images(settings.DB_IMAGES_ROOT)), ncols=100)
+        paths = tqdm(list(batched(list(self.find_images(settings.DB_IMAGES_ROOT)), k=settings.BATCH_SIZE)))
         # Add images to the databse
         yield add_images(paths), len(paths), "Adding new images..."
         # Commit and build the k-d tree

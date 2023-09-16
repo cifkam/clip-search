@@ -32,6 +32,8 @@ class Settings:
         self.SERVER_PORT = 5000
         self.RUNNER_PORT = 16060
 
+        self.BATCH_SIZE = 1
+
     def get_values(self):
         return dict(self.__dict__)
 

@@ -47,6 +47,23 @@ To set up the required Python environment, you have two options: using `virtuale
 ### Setting up the image library
 By default the application searches for images in `flask/db_images` directory. You can either create the directory and copy your image files here (including any subdirectories), or you can create symlink that points to your desired destination. Alternatively, you can change the image library path by modifying the value of `DB_IMAGES_ROOT` in the [flask/settings.json](flask/settings.json) file. Note that specifying e.g. root of your filesystem is not considered safe as this will give access to ANY file of your filesystem through the application endpoints. Also, changing the path after the application already created its database will cause error in displaying the image results, in that case please [reset the databse](#reseting-and-refreshing-the-image-databse).
 
+#### Example images and models
+We provide a subset of images from the [Open Images Dataset](https://storage.googleapis.com/openimages/web/index.html) and already pre-computed embeddings for this subset. If you wish to try our application without waiting for the embeddings to create for you own images, you can follow the next steps:
+1. With your environment activated, go to `example_ds` directory and run the dataset downloader without any arguments:
+   ```
+   cd example_ds
+   python download_dataset.py
+   ```
+2. Download the internal databse files and unzip them into the `flask` directory:
+   ```
+   cd ../flask
+   gdown https://drive.google.com/uc?id=14oLiRJjVj_eB3uNAxsQHQYGn4yXmvfjZ
+   unzip clip-search-open_image_db.zip
+   ```
+
+   After running the application, you can start searching the images directly. 
+
+
 ### Running the application
 After you created the the Python environment and the image library has been prepared, navigate to the `flask` directory and start the application:
 ```
@@ -63,21 +80,6 @@ Whenever user adds, removes or changes an image in the image library, the applic
 
 Note: Image embeddings are specific for each CLIP model and image library controls apply only for the currently selected CLIP model. Whenever you change the image files and refresh the library, the database files for other models will still be outdated. 
 
-### Example images and models
-We provide a subset of images from the [Open Images Dataset](https://storage.googleapis.com/openimages/web/index.html) and already pre-computed embeddings for this subset. If you wish to try our application without waiting for the embeddings to create for you own images, you can follow the next steps:
-1. With your environment activated, go to `example_ds` directory and run the dataset downloader without any arguments:
-   ```
-   cd example_ds
-   python download_dataset.py
-   ```
-2. Download the internal databse files and unzip them into the `flask` directory:
-   ```
-   cd ../flask
-   gdown https://drive.google.com/uc?id=14oLiRJjVj_eB3uNAxsQHQYGn4yXmvfjZ
-   unzip clip-search-open_image_db.zip
-   ```
-
-   After running the application, you can start searching the images directly. 
 
 ## Documentation
 Please refer to [docs/doc.md](docs/doc.md).
