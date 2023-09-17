@@ -49,7 +49,7 @@ By default the application searches for images in `flask/db_images` directory. Y
 
 #### Example images and models
 We provide a subset of images from the [Open Images Dataset](https://storage.googleapis.com/openimages/web/index.html) and already pre-computed embeddings for this subset. If you wish to try our application without waiting for the embeddings to create for you own images, you can follow the next steps:
-1. With your environment activated, go to `example_ds` directory and run the dataset downloader without any arguments:
+1. With your environment activated (e.g. by `source cpu-venv/bin/activate`), go to `example_ds` directory and run the dataset downloader without any arguments:
    ```
    cd example_ds
    python download_dataset.py
